@@ -1,8 +1,8 @@
 import "./scss/styles.scss";
-import { CatalogModel } from "./components/base/models/CatalogModel";
-import { BasketModel } from "./components/base/models/BasketModel";
-import { BuyerModel } from "./components/base/models/BuyerModel";
-import { LarekAPI } from "./components/base/LarekAPI";
+import { CatalogModel } from "./components/models/CatalogModel";
+import { BasketModel } from "./components/models/BasketModel";
+import { BuyerModel } from "./components/models/BuyerModel";
+import { LarekAPI } from "./components/LarekAPI";
 import { Api } from "./components/base/Api";
 import { API_URL } from "./utils/constants";
 

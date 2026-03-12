@@ -1,4 +1,4 @@
-import { IBuyer } from '../../../types/index';
+import { IBuyer } from '../../types/index';
 
 export class BuyerModel {
   private _payment: string | null = null;

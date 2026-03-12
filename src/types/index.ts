@@ -28,11 +28,7 @@ export interface IBuyer {
 }
 
 // Интерфейс заказа
-export interface IOrder {
-  payment: string;
-  address: string;
-  phone: string;
-  email: string;
+export interface IOrder extends IBuyer {
   total: number; // общая сумма
   items: string[]; // массив ID товаров для покупки
 }

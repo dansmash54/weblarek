@@ -1,4 +1,4 @@
-import { IProduct } from '../../../types/index';
+import { IProduct } from "../../types/index";
 
 export class CatalogModel {
   private _items: IProduct[] = [];
@@ -16,7 +16,7 @@ export class CatalogModel {
 
   // Получить товар по ID
   getProduct(id: string): IProduct | undefined {
-    return this._items.find(item => item.id === id);
+    return this._items.find((item) => item.id === id);
   }
 
   // Сохранить выбранную карточку
