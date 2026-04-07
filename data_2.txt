@@ -1,0 +1,87 @@
+планирование по шагу 1 9 спринта
+
+COMPONENT.TS
+СЕТТЕРЫ
+нужны они для каждого значения для отображения контента
+
+счетчик, изобр, еазвание, описание.
+
+метод ренденр
+
+render(data)
+
+data = {
+    count: 5,
+    title: "Name",
+    price: 250
+}
+
+Object.assign(
+    this as object, data
+) - ОБЪЕДИНЯЕТ ОБЪЕКТЫ
+
+class Example {
+    ...
+
+    constructor() {}
+    set count (value) {..}
+
+    И Т,Д,
+}
+
+создаем интерфейс, где будут описаны сеттеры
+
+АНАЛИЗ МАКЕТА
+
+1 страница
+
+Модальные окна:
+1. описание товара
+2. корзина
+3. различные формы
+4. подтверждение покупки
+
+БЛОКИ
+
+1. карточки товаров - СПИСОК
+2. в шапке картинка корозины - СЧЕТЧИК В НЕЙ
+3. картчока с описанием - отдельное
+4. порядок товаров (список покупок)
+5. формы
+6. подтверждение
+
+товар -> модальное окно товара -> корзина с этим же товаром = разное отображение одного и того же товара
+
+
+форма: емейл(телефон) и адрес
+
+
+АНАЛИЗ ВЕРСТКИ
+
+HEADER
+class header  
+button - корзина HTMLButtonElement
+поле - счетчик HTMLElement
+
+set counter (value: number)
+
+HeaderData
+counter: number
+
+MAIN
+class gallery HTMLElement
+
+set catalog (items: HTMLElement[])
+
+GalleryData
+catalog: HTMLElement[]
+
+DIV
+class modal
+
+TEMPLATE
+id success
+клонируем темплейт и тупо вставляем (например кнопку закрытия)
+
+
+viev - presenter - model - presenter - view

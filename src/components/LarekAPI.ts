@@ -1,5 +1,4 @@
-import { IApi } from "../types/index";
-import { IProduct, IOrder, IProductList } from "../types/index";
+import { IApi, IProduct, IOrder, IProductList, IOrderResult } from "../types/index";
 
 export class LarekAPI {
   private _api: IApi;
@@ -15,7 +14,7 @@ export class LarekAPI {
   }
 
   // Отправить заказ на сервер
-  async postOrder(order: IOrder): Promise<{ id: string; total: number }> {
-    return await this._api.post("/order", order);
+  async postOrder(order: IOrder): Promise<IOrderResult> {
+    return await this._api.post<IOrderResult>("/order", order);
   }
 }

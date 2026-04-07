@@ -1,12 +1,16 @@
-import { IProduct } from "../../types/index";
+import { IProduct } from '../../types/index';
+import { EventEmitter } from '../base/Events';
 
 export class CatalogModel {
   private _items: IProduct[] = [];
   private _preview: string | null = null;
+  
+  constructor(private events: EventEmitter) {}
 
   // Сохранить массив товаров
   setItems(items: IProduct[]): void {
     this._items = items;
+    this.events.emit('products:changed');
   }
 
   // Получить список всех товаров
@@ -22,6 +26,7 @@ export class CatalogModel {
   // Сохранить выбранную карточку
   setPreview(id: string | null): void {
     this._preview = id;
+    this.events.emit('preview:changed');
   }
 
   // Получить ID выбранной карточки
