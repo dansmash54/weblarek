@@ -1,12 +1,11 @@
 import { Component } from "../base/Component";
 import { ICardData } from "../../types/index";
-import { EventEmitter } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 /**
  * Карточка товара для отображения в корзине
  */
 export class CardBasket extends Component<ICardData> {
-  protected _id: string = "";
   protected _index: HTMLElement;
   protected _title: HTMLElement;
   protected _price: HTMLElement;
@@ -14,46 +13,34 @@ export class CardBasket extends Component<ICardData> {
 
   constructor(
     container: HTMLElement,
-    protected events: EventEmitter,
     index: number,
+    private onDelete: () => void,
   ) {
     super(container);
 
-    this._index = container.querySelector(".basket__item-index") as HTMLElement;
-    this._title = container.querySelector(".card__title") as HTMLElement;
-    this._price = container.querySelector(".card__price") as HTMLElement;
-    this._button = container.querySelector(
+    this._index = ensureElement<HTMLElement>(".basket__item-index", container);
+    this._title = ensureElement<HTMLElement>(".card__title", container);
+    this._price = ensureElement<HTMLElement>(".card__price", container);
+    this._button = ensureElement<HTMLButtonElement>(
       ".basket__item-delete",
-    ) as HTMLButtonElement;
+      container,
+    );
 
-    if (this._index) {
-      this._index.textContent = String(index + 1);
-    }
+    this._index.textContent = String(index + 1);
 
-    if (this._button) {
-      this._button.addEventListener("click", () => {
-        this.events.emit("card:remove", { id: this._id });
-      });
-    }
-  }
-
-  set id(value: string) {
-    this._id = value;
+    this._button.addEventListener("click", () => {
+      onDelete();
+    });
   }
 
   set title(value: string) {
-    if (this._title) {
-      this.setText(this._title, value);
-    }
+    this.setText(this._title, value);
   }
 
   set price(value: number | null) {
-    if (this._price) {
-      if (value === null) {
-        this.setText(this._price, "Недоступно");
-      } else {
-        this.setText(this._price, `${value} синапсов`);
-      }
-    }
+    this.setText(
+      this._price,
+      value === null ? "Недоступно" : `${value} синапсов`,
+    );
   }
 }

@@ -33,7 +33,6 @@ const larekAPI = new LarekAPI(api);
 const page = new Page(document.body);
 const header = new Header(document.querySelector(".header")!, events);
 const modal = new Modal(document.querySelector("#modal-container")!, events);
-const basket = new Basket(document.querySelector("#basket")!, events);
 
 // Шаблоны
 const cardCatalogTemplate = document.querySelector(
@@ -53,25 +52,36 @@ const contactsTemplate = document.querySelector(
   "#contacts",
 ) as HTMLTemplateElement;
 
-// Функция создает форму заказа
-function createOrderForm(): OrderForm {
-  const orderElement = orderTemplate.content.cloneNode(true) as HTMLElement;
-  const formElement = orderElement.querySelector("form") as HTMLFormElement;
-  return new OrderForm(formElement, events);
-}
+// СОЗДАЕМ ФОРМЫ
+const orderFormElement = orderTemplate.content.cloneNode(true) as HTMLElement;
+const orderForm = new OrderForm(
+  orderFormElement.querySelector("form") as HTMLFormElement,
+  events,
+);
 
-// Функция создает форму контактов
-function createContactsForm(): ContactsForm {
-  const contactsElement = contactsTemplate.content.cloneNode(
-    true,
-  ) as HTMLElement;
-  const formElement = contactsElement.querySelector("form") as HTMLFormElement;
-  return new ContactsForm(formElement, events);
-}
+const contactsFormElement = contactsTemplate.content.cloneNode(
+  true,
+) as HTMLElement;
+const contactsForm = new ContactsForm(
+  contactsFormElement.querySelector("form") as HTMLFormElement,
+  events,
+);
 
-// Создаем начальные экземпляры форм
-let orderForm = createOrderForm();
-let contactsForm = createContactsForm();
+// СОЗДАЕМ КОРЗИНУ
+const basketTemplate = document.querySelector("#basket") as HTMLTemplateElement;
+const basketElement = basketTemplate.content.cloneNode(true) as HTMLElement;
+const basket = new Basket(basketElement, events);
+
+// СОЗДАЕМ CARD PREVIEW
+const previewElement = cardPreviewTemplate.content.cloneNode(
+  true,
+) as HTMLElement;
+const cardPreview = new CardPreview(previewElement, () => {
+  const previewId = catalogModel.getPreview();
+  if (previewId) {
+    events.emit("card:action", { id: previewId });
+  }
+});
 
 // сервак
 larekAPI
@@ -85,7 +95,7 @@ larekAPI
 
 // обработчики
 
-// 1. Обновление каталога на главной странице
+// 1. Обновление каталога
 events.on("products:changed", () => {
   const products = catalogModel.getItems();
 
@@ -94,14 +104,14 @@ events.on("products:changed", () => {
       true,
     ) as DocumentFragment;
     const cardElement = fragment.firstElementChild as HTMLElement;
+    if (!cardElement) return document.createElement("div");
 
-    if (!cardElement) {
-      return document.createElement("div");
-    }
+    const card = new CardCatalog(
+      cardElement,
+      () => events.emit("card:select", { id: product.id }),
+      () => events.emit("card:add", { id: product.id }),
+    );
 
-    const card = new CardCatalog(cardElement, events);
-
-    card.id = product.id;
     card.title = product.title;
     card.image = CDN_URL + product.image;
     card.category = product.category;
@@ -113,7 +123,7 @@ events.on("products:changed", () => {
   page.catalog = cards;
 });
 
-// 2. Выбор карточки товара (клик по карточке)
+// 2. Выбор карточки товара
 events.on("card:select", (data: { id: string }) => {
   catalogModel.setPreview(data.id);
 });
@@ -126,15 +136,6 @@ events.on("preview:changed", () => {
   const product = catalogModel.getProduct(previewId);
   if (!product) return;
 
-  const fragment = cardPreviewTemplate.content.cloneNode(
-    true,
-  ) as DocumentFragment;
-  const cardElement = fragment.firstElementChild as HTMLElement;
-  if (!cardElement) return;
-
-  const cardPreview = new CardPreview(cardElement, events);
-
-  cardPreview.id = product.id;
   cardPreview.title = product.title;
   cardPreview.image = CDN_URL + product.image;
   cardPreview.category = product.category;
@@ -151,10 +152,22 @@ events.on("preview:changed", () => {
   }
 
   modal.render(cardPreview.render());
-  page.lockScroll();
 });
 
-// 4. Добавление товара в корзину
+// 4. Действие с карточкой (добавление/удаление)
+events.on("card:action", (data: { id: string }) => {
+  const product = catalogModel.getProduct(data.id);
+  if (!product || product.price === null) return;
+
+  if (basketModel.hasItem(data.id)) {
+    basketModel.removeItem(data.id);
+  } else {
+    basketModel.addItem(product);
+  }
+  modal.close();
+});
+
+// 5. Добавление товара (из каталога)
 events.on("card:add", (data: { id: string }) => {
   const product = catalogModel.getProduct(data.id);
   if (product && product.price !== null) {
@@ -163,141 +176,79 @@ events.on("card:add", (data: { id: string }) => {
   modal.close();
 });
 
-// 5. Удаление товара из корзины
+// 6. Удаление товара из корзины
 events.on("card:remove", (data: { id: string }) => {
   basketModel.removeItem(data.id);
 });
 
-// 6. Обновление отображения корзины
+// 7. Обновление отображения корзины
 events.on("basket:changed", () => {
   header.counter = basketModel.getCount();
 
-  // Если корзина открыта — обновляем содержимое
-  const modalContent = document.querySelector(".modal_active .modal__content");
-  if (modalContent) {
-    const basketElement = modalContent.querySelector(".basket");
-    if (basketElement) {
-      // Перерисовываем корзину
-      const basketTemplate = document.querySelector(
-        "#basket",
-      ) as HTMLTemplateElement;
-      const newBasketElement = basketTemplate.content.cloneNode(
-        true,
-      ) as HTMLElement;
-      const newBasket = new Basket(newBasketElement, events);
-
-      const items = basketModel.getItems();
-      const cards = items.map((product, index) => {
-        const fragment = cardBasketTemplate.content.cloneNode(
-          true,
-        ) as DocumentFragment;
-        const cardElement = fragment.firstElementChild as HTMLElement;
-        if (!cardElement) return document.createElement("li");
-
-        const card = new CardBasket(cardElement, events, index);
-        card.id = product.id;
-        card.title = product.title;
-        card.price = product.price;
-        return card.render();
-      });
-
-      newBasket.items = cards;
-      newBasket.total = basketModel.getTotal();
-
-      // Заменяем содержимое корзины
-      const modalContentElement = document.querySelector(
-        ".modal_active .modal__content",
-      );
-      if (modalContentElement) {
-        modalContentElement.innerHTML = "";
-        modalContentElement.appendChild(newBasket.render());
-      }
-    }
-  }
-});
-
-// 7. Открытие корзины
-events.on("basket:open", () => {
-  const basketTemplate = document.querySelector(
-    "#basket",
-  ) as HTMLTemplateElement;
-  const basketElement = basketTemplate.content.cloneNode(true) as HTMLElement;
-
-  const newBasket = new Basket(basketElement, events);
-
-  newBasket.items = basketModel.getItems().map((product, index) => {
-    const cardElement = cardBasketTemplate.content.cloneNode(
+  const items = basketModel.getItems();
+  const cards = items.map((product, index) => {
+    const fragment = cardBasketTemplate.content.cloneNode(
       true,
-    ) as HTMLElement;
-    const card = new CardBasket(cardElement, events, index);
-    card.id = product.id;
+    ) as DocumentFragment;
+    const cardElement = fragment.firstElementChild as HTMLElement;
+    if (!cardElement) return document.createElement("li");
+
+    const card = new CardBasket(cardElement, index, () =>
+      events.emit("card:remove", { id: product.id }),
+    );
     card.title = product.title;
     card.price = product.price;
+
     return card.render();
   });
-  newBasket.total = basketModel.getTotal();
 
-  modal.render(newBasket.render());
-  page.lockScroll();
+  basket.items = cards;
+  basket.total = basketModel.getTotal();
 });
 
-// 8. Оформление заказа
+// 8. Открытие корзины
+events.on("basket:open", () => {
+  events.emit("basket:changed");
+  modal.render(basket.render());
+});
+
+// 9. Оформление заказа
 events.on("basket:order", () => {
   buyerModel.clear();
-  orderForm = createOrderForm();
   modal.render(orderForm.render());
 });
 
-// 9. Изменение полей в форме
+// 10. Изменение полей в форме
 events.on("form:change", (data: { field: string; value: string }) => {
   buyerModel.setField(data.field as keyof IBuyer, data.value);
 });
 
-// 10. Валидация формы
+// 11. Валидация формы (обновляем ОБЕ формы)
 events.on("buyer:changed", () => {
-  const modalContent = document.querySelector(".modal_active .modal__content");
-  if (!modalContent) return;
+  const errors = buyerModel.validate();
 
-  const orderFormElement = modalContent.querySelector("form[name='order']");
-  const contactsFormElement = modalContent.querySelector(
-    "form[name='contacts']",
-  );
+  // Для формы заказа (первый шаг)
+  const orderErrors = [];
+  if (errors.payment) orderErrors.push(errors.payment);
+  if (errors.address) orderErrors.push(errors.address);
+  orderForm.valid = orderErrors.length === 0;
+  orderForm.errors = orderErrors;
 
-  if (orderFormElement) {
-    const isValid = buyerModel.isOrderValid();
-    orderForm.valid = isValid;
-    orderForm.errors = buyerModel.getOrderErrors();
-
-    const submitButton = orderFormElement.querySelector(
-      "button[type=submit]",
-    ) as HTMLButtonElement;
-    if (submitButton) {
-      submitButton.disabled = !isValid;
-    }
-  } else if (contactsFormElement) {
-    const isValid = buyerModel.isContactsValid();
-    contactsForm.valid = isValid;
-    contactsForm.errors = buyerModel.getContactsErrors();
-  }
+  // Для формы контактов (второй шаг)
+  const contactsErrors = [];
+  if (errors.email) contactsErrors.push(errors.email);
+  if (errors.phone) contactsErrors.push(errors.phone);
+  contactsForm.valid = contactsErrors.length === 0;
+  contactsForm.errors = contactsErrors;
 });
 
-// 11. Отправка формы заказа
-events.on("order:submit", (data: { payment: string; address: string }) => {
-  buyerModel.setField("payment", data.payment);
-  buyerModel.setField("address", data.address);
-
-  contactsForm = createContactsForm();
+// 12. Отправка формы заказа
+events.on("order:submit", () => {
   modal.render(contactsForm.render());
 });
 
-// 12. Отправка формы контактов
-events.on("contacts:submit", (data: { email: string; phone: string }) => {
-  buyerModel.setField("email", data.email);
-  buyerModel.setField("phone", data.phone);
-
-  const errors = buyerModel.validate();
-  if (Object.keys(errors).length > 0) return;
-
+// 13. Отправка формы контактов
+events.on("contacts:submit", () => {
   const order: IOrder = {
     ...buyerModel.getData(),
     total: basketModel.getTotal(),
@@ -324,7 +275,7 @@ events.on("contacts:submit", (data: { email: string; phone: string }) => {
     });
 });
 
-// 13. Закрытие модального окна
+// 14. Закрытие модального окна
 events.on("modal:close", () => {
-  page.unlockScroll();
+  // скролл разблокируется
 });

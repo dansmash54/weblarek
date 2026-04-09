@@ -1,6 +1,7 @@
 import { Component } from "../base/Component";
 import { IBasketData } from "../../types/index";
 import { EventEmitter } from "../base/Events";
+import { ensureElement } from "../../utils/utils";
 
 export class Basket extends Component<IBasketData> {
   protected _list: HTMLElement; // список
@@ -14,11 +15,12 @@ export class Basket extends Component<IBasketData> {
     super(container);
 
     // находим элементы в DOM
-    this._list = container.querySelector(".basket__list") as HTMLElement;
-    this._total = container.querySelector(".basket__total") as HTMLElement;
-    this._button = container.querySelector(
+    this._list = ensureElement<HTMLElement>(".basket__list", container);
+    this._total = ensureElement<HTMLElement>(".basket__price", container);
+    this._button = ensureElement<HTMLButtonElement>(
       ".basket__button",
-    ) as HTMLButtonElement;
+      container,
+    );
 
     // при клике на "Оформить" генерируем событие для презентера
     if (this._button) {

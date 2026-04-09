@@ -29,10 +29,7 @@ export class ContactsForm extends Form<IContactsFormData> {
   protected onSubmit(): void {
     if (!this._emailInput || !this._phoneInput) return;
 
-    this.events.emit("contacts:submit", {
-      email: this._emailInput.value,
-      phone: this._phoneInput.value,
-    });
+    this.events.emit("contacts:submit");
   }
 
   //Установить значение емаил

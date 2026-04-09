@@ -48,31 +48,6 @@ export class BuyerModel {
     this.events.emit("buyer:changed");
   }
 
-  // Проверка для первого шага (способ оплаты + адрес)
-  isOrderValid(): boolean {
-    return !!this._payment && !!this._address.trim();
-  }
-
-  // Проверка для второго шага (email + телефон)
-  isContactsValid(): boolean {
-    return !!this._email.trim() && !!this._phone.trim();
-  }
-
-  // Получить ошибки для первого шага
-  getOrderErrors(): string[] {
-    const errors: string[] = [];
-    if (!this._payment) errors.push("Выберите способ оплаты");
-    if (!this._address.trim()) errors.push("Введите адрес доставки");
-    return errors;
-  }
-
-  // Получить ошибки для второго шага
-  getContactsErrors(): string[] {
-    const errors: string[] = [];
-    if (!this._email.trim()) errors.push("Введите email");
-    if (!this._phone.trim()) errors.push("Введите номер телефона");
-    return errors;
-  }
 
   // Полная валидация для отправки заказа
   validate(): Partial<Record<keyof IBuyer, string>> {

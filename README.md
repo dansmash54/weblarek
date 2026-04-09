@@ -209,3 +209,322 @@ interface IOrder {
 `getProductList(): Promise<IProduct[]>` - получает список всех товаров с сервера
 
 `postOrder(order: IOrder): Promise<any>` - отправляет заказ на сервер
+
+## Компоненты представления (View)
+
+Компоненты представления отвечают за отображение интерфейса и генерацию событий при взаимодействии пользователя. Они не хранят данные и не содержат бизнес-логики — только работа с DOM и эмит событий.
+
+### Иерархия классов
+
+Component
+├── Card (абстрактный)
+│ ├── CardCatalog — карточка товара в каталоге
+│ ├── CardPreview — карточка товара в модальном окне (детальный просмотр)
+│ └── CardBasket — карточка товара в корзине
+├── Basket — компонент корзины
+├── Form (абстрактный)
+│ ├── OrderForm — форма первого шага (оплата + адрес)
+│ └── ContactsForm — форма второго шага (email + телефон)
+├── Header — шапка страницы (кнопка корзины + счетчик)
+├── Modal — модальное окно
+├── Page — главная страница (галерея карточек)
+└── Success — сообщение об успешной оплате
+
+### 1. Card
+
+Базовый класс для всех карточек товара. Содержит общие поля: название и цена.
+
+**Поля:**
+`_title: HTMLElement` — элемент с названием товара
+`_price: HTMLElement` — элемент с ценой
+
+**Сеттеры:**
+`title(value: string): void` — установить название
+`price(value: number | null): void` — установить цену (null отображается как "Недоступно")
+
+### 2. CardCatalog
+
+Карточка товара для отображения в каталоге на главной странице.
+
+**Поля:**
+`_image: HTMLImageElement` — элемент с изображением
+`_category: HTMLElement` — элемент с категорией
+`_button?: HTMLButtonElement` — кнопка "Купить"
+
+**Конструктор:**
+
+```typescript
+constructor(container: HTMLElement, onCardClick: () => void, onButtonClick: () => void)
+onCardClick — колбэк при клике на карточку (открыть детали)
+
+onButtonClick — колбэк при клике на кнопку (добавить в корзину)
+
+Сеттеры:
+
+image(value: string): void — установить изображение
+
+category(value: string): void — установить категорию и CSS-класс для цвета фона
+
+Генерируемые события:
+
+card:select — при клике на карточку
+
+card:add — при клике на кнопку "Купить"
+
+3. CardPreview
+Карточка товара для отображения в модальном окне.
+
+Поля:
+
+_image: HTMLImageElement — элемент с изображением
+
+_category: HTMLElement — элемент с категорией
+
+_button?: HTMLButtonElement — кнопка действия (Купить/Удалить)
+
+_description?: HTMLElement — элемент с описанием
+
+Конструктор:
+
+typescript
+constructor(container: HTMLElement, onAction: () => void)
+onAction — колбэк при клике на кнопку (презентер сам решает: добавить или удалить)
+
+Сеттеры:
+
+image(value: string): void — установить изображение
+
+category(value: string): void — установить категорию и CSS-класс
+
+description(value: string): void — установить описание
+
+buttonText(value: string): void — установить текст кнопки
+
+disabled(value: boolean): void — заблокировать кнопку
+
+Генерируемые события:
+
+card:action — при клике на кнопку (презентер определяет: добавить или удалить)
+
+4. CardBasket
+Карточка товара для отображения в корзине.
+
+Поля:
+
+_index: HTMLElement — порядковый номер
+
+_title: HTMLElement — название товара
+
+_price: HTMLElement — цена
+
+_button: HTMLButtonElement — кнопка удаления
+
+Конструктор:
+
+typescript
+constructor(container: HTMLElement, index: number, onDelete: () => void)
+index — порядковый номер товара в корзине
+
+onDelete — колбэк при клике на кнопку удаления
+
+Сеттеры:
+
+title(value: string): void — установить название
+
+price(value: number | null): void — установить цену
+
+Генерируемые события:
+
+card:remove — при клике на кнопку удаления
+
+5. Basket
+Компонент корзины, отображает список товаров, общую сумму и кнопку оформления.
+
+Поля:
+
+_list: HTMLElement — контейнер для списка товаров
+
+_total: HTMLElement — элемент с общей суммой
+
+_button: HTMLButtonElement — кнопка "Оформить"
+
+Сеттеры:
+
+items(items: HTMLElement[]): void — установить список карточек (если пусто — показать "Корзина пуста")
+
+total(value: number): void — установить общую сумму
+
+Генерируемые события:
+
+basket:order — при клике на кнопку "Оформить"
+
+6. Form
+Базовый класс для всех форм. Управляет валидацией, отображением ошибок и состоянием кнопки отправки.
+
+Поля:
+
+_submitButton: HTMLButtonElement — кнопка отправки формы
+
+_errors: HTMLElement — контейнер для ошибок
+
+Сеттеры:
+
+valid(value: boolean): void — активировать/деактивировать кнопку отправки
+
+errors(value: string[]): void — отобразить ошибки
+
+Абстрактные методы:
+
+onInputChange(field, value): void — обработка изменения полей
+
+onSubmit(): void — обработка отправки формы
+
+7. OrderForm
+Форма первого шага оформления заказа (способ оплаты + адрес).
+
+Поля:
+
+_cardButton: HTMLButtonElement — кнопка выбора оплаты картой
+
+_cashButton: HTMLButtonElement — кнопка выбора оплаты наличными
+
+_addressInput: HTMLInputElement — поле ввода адреса
+
+Методы:
+
+setPaymentMethod(method: string): void — визуальное обновление кнопок (без эмита)
+
+Сеттеры:
+
+address(value: string): void — установить адрес
+
+payment(value: string): void — установить способ оплаты
+
+Генерируемые события:
+
+form:change — при изменении полей (адрес, способ оплаты)
+
+order:submit — при отправке формы
+
+8. ContactsForm
+Форма второго шага оформления заказа (email + телефон).
+
+Поля:
+
+_emailInput: HTMLInputElement — поле ввода email
+
+_phoneInput: HTMLInputElement — поле ввода телефона
+
+Сеттеры:
+
+email(value: string): void — установить email
+
+phone(value: string): void — установить телефон
+
+Генерируемые события:
+
+form:change — при изменении полей
+
+contacts:submit — при отправке формы
+
+9. Header
+Шапка страницы, отображает кнопку корзины и счетчик товаров.
+
+Поля:
+
+_basketButton: HTMLButtonElement — кнопка корзины
+
+_counter: HTMLElement — счетчик товаров
+
+Сеттеры:
+
+counter(value: number): void — обновить счетчик
+
+Генерируемые события:
+
+basket:open — при клике на кнопку корзины
+
+10. Modal
+Модальное окно, управляет отображением контента и блокировкой скролла.
+
+Поля:
+
+_closeButton: HTMLButtonElement — кнопка закрытия
+
+_content: HTMLElement — контейнер для контента
+
+Методы:
+
+open(): void — открыть окно (блокирует скролл страницы)
+
+close(): void — закрыть окно (разблокирует скролл, генерирует modal:close)
+
+render(data: HTMLElement): HTMLElement — установить контент и открыть
+
+Сеттеры:
+
+content(value: HTMLElement): void — установить содержимое окна
+
+Генерируемые события:
+
+modal:close — при закрытии окна
+
+11.Page
+Главная страница, управляет отображением галереи карточек.
+
+Поля:
+
+_gallery: HTMLElement — контейнер для карточек
+
+Сеттеры:
+
+catalog(items: HTMLElement[]): void — установить карточки в галерею
+
+12. Success
+Сообщение об успешной оплате заказа.
+
+Поля:
+
+_closeButton: HTMLButtonElement — кнопка "За новыми покупками"
+
+_total: HTMLElement — элемент с суммой списания
+
+Сеттеры:
+
+total(value: number): void — установить сумму списания
+
+Генерируемые события:
+
+modal:close — при клике на кнопку закрытия
+
+СОБЫТИЯ
+
+
+products:changed	CatalogModel	После загрузки товаров с сервера
+
+preview:changed	CatalogModel	При выборе товара для просмотра
+
+basket:changed	BasketModel	При добавлении/удалении товара
+
+buyer:changed	BuyerModel	При изменении данных покупателя
+
+card:select	CardCatalog	Клик по карточке в каталоге
+
+card:add	CardCatalog	Клик по кнопке "Купить"
+
+card:remove	CardBasket	Клик по кнопке удаления в корзине
+
+card:action	CardPreview	Клик по кнопке в модальном окне
+
+basket:open	Header	Клик по иконке корзины
+
+basket:order	Basket	Клик по кнопке "Оформить"
+
+order:submit	OrderForm	Отправка формы первого шага
+
+contacts:submit	ContactsForm	Отправка формы второго шага
+
+form:change	OrderForm / ContactsForm	Изменение любого поля формы
+
+modal:close	Modal	Закрытие модального окна
+```
