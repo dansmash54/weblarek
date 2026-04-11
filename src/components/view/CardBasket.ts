@@ -1,14 +1,12 @@
-import { Component } from "../base/Component";
-import { ICardData } from "../../types/index";
+import { Card } from "./Card";
 import { ensureElement } from "../../utils/utils";
 
 /**
  * Карточка товара для отображения в корзине
  */
-export class CardBasket extends Component<ICardData> {
+export class CardBasket extends Card {
   protected _index: HTMLElement;
-  protected _title: HTMLElement;
-  protected _price: HTMLElement;
+
   protected _button: HTMLButtonElement;
 
   constructor(
@@ -19,8 +17,6 @@ export class CardBasket extends Component<ICardData> {
     super(container);
 
     this._index = ensureElement<HTMLElement>(".basket__item-index", container);
-    this._title = ensureElement<HTMLElement>(".card__title", container);
-    this._price = ensureElement<HTMLElement>(".card__price", container);
     this._button = ensureElement<HTMLButtonElement>(
       ".basket__item-delete",
       container,
@@ -33,14 +29,12 @@ export class CardBasket extends Component<ICardData> {
     });
   }
 
-  set title(value: string) {
-    this.setText(this._title, value);
-  }
-
   set price(value: number | null) {
-    this.setText(
-      this._price,
-      value === null ? "Недоступно" : `${value} синапсов`,
-    );
+    if (this._price) {
+      this.setText(
+        this._price,
+        value === null ? "Недоступно" : `${value} синапсов`,
+      );
+    }
   }
 }

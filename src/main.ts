@@ -73,9 +73,11 @@ const basketElement = basketTemplate.content.cloneNode(true) as HTMLElement;
 const basket = new Basket(basketElement, events);
 
 // СОЗДАЕМ CARD PREVIEW
-const previewElement = cardPreviewTemplate.content.cloneNode(
-  true,
-) as HTMLElement;
+const previewFragment = cardPreviewTemplate.content.cloneNode(true) as DocumentFragment;
+const previewElement = previewFragment.firstElementChild as HTMLElement;
+if (!previewElement) {
+  throw new Error("CardPreview: не удалось получить элемент из темплейта");
+}
 const cardPreview = new CardPreview(previewElement, () => {
   const previewId = catalogModel.getPreview();
   if (previewId) {
@@ -106,10 +108,8 @@ events.on("products:changed", () => {
     const cardElement = fragment.firstElementChild as HTMLElement;
     if (!cardElement) return document.createElement("div");
 
-    const card = new CardCatalog(
-      cardElement,
-      () => events.emit("card:select", { id: product.id }),
-      () => events.emit("card:add", { id: product.id }),
+    const card = new CardCatalog(cardElement, () =>
+      events.emit("card:select", { id: product.id }),
     );
 
     card.title = product.title;
@@ -125,16 +125,21 @@ events.on("products:changed", () => {
 
 // 2. Выбор карточки товара
 events.on("card:select", (data: { id: string }) => {
+ 
   catalogModel.setPreview(data.id);
 });
 
 // 3. Открытие модального окна с инфой о товаре
 events.on("preview:changed", () => {
+  
   const previewId = catalogModel.getPreview();
+ 
   if (!previewId) return;
 
   const product = catalogModel.getProduct(previewId);
   if (!product) return;
+
+
 
   cardPreview.title = product.title;
   cardPreview.image = CDN_URL + product.image;
@@ -151,7 +156,11 @@ events.on("preview:changed", () => {
     cardPreview.buttonText = "Купить";
   }
 
-  modal.render(cardPreview.render());
+  
+
+  const renderedElement = cardPreview.render();
+
+modal.render(renderedElement);
 });
 
 // 4. Действие с карточкой (добавление/удаление)
@@ -208,7 +217,6 @@ events.on("basket:changed", () => {
 
 // 8. Открытие корзины
 events.on("basket:open", () => {
-  events.emit("basket:changed");
   modal.render(basket.render());
 });
 
@@ -221,6 +229,8 @@ events.on("basket:order", () => {
 // 10. Изменение полей в форме
 events.on("form:change", (data: { field: string; value: string }) => {
   buyerModel.setField(data.field as keyof IBuyer, data.value);
+   if (data.field === "payment") {
+    orderForm.payment = data.value;}
 });
 
 // 11. Валидация формы (обновляем ОБЕ формы)
@@ -277,5 +287,6 @@ events.on("contacts:submit", () => {
 
 // 14. Закрытие модального окна
 events.on("modal:close", () => {
+  modal.close();
   // скролл разблокируется
 });

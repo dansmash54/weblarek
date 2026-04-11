@@ -48,3 +48,4 @@ export class Modal extends Component<HTMLElement> {
     return this.container;
   }
 }
+

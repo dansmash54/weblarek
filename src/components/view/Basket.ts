@@ -8,10 +8,7 @@ export class Basket extends Component<IBasketData> {
   protected _total: HTMLElement; // сумма
   protected _button: HTMLButtonElement; // оформить заказ (кнопка)
 
-  constructor(
-    container: HTMLElement,
-    protected events: EventEmitter,
-  ) {
+  constructor(container: HTMLElement, protected events: EventEmitter) {
     super(container);
 
     // находим элементы в DOM
@@ -24,6 +21,7 @@ export class Basket extends Component<IBasketData> {
 
     // при клике на "Оформить" генерируем событие для презентера
     if (this._button) {
+      this._button.disabled = true;
       this._button.addEventListener("click", () => {
         events.emit("basket:order");
       });

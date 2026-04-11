@@ -25,6 +25,7 @@ export class CatalogModel {
 
   // Сохранить выбранную карточку
   setPreview(id: string | null): void {
+    
     this._preview = id;
     this.events.emit('preview:changed');
   }
